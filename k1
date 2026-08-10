@@ -540,11 +540,8 @@ local C_INPUT   = Color3.fromRGB(28, 28, 28)
 local C_SEP     = Color3.fromRGB(45, 45, 45)
 local C_ACCENT  = Color3.fromRGB(255, 80, 80)
 
-local TWEEN_DOT    = TweenInfo.new(0.25, Enum.EasingStyle.Cubic,  Enum.EasingDirection.Out)
-local TWEEN_ROW    = TweenInfo.new(0.18, Enum.EasingStyle.Cubic,  Enum.EasingDirection.Out)
-local TWEEN_FAST   = TweenInfo.new(0.12, Enum.EasingStyle.Sine,   Enum.EasingDirection.Out)
-local TWEEN_OPEN   = TweenInfo.new(0.5,  Enum.EasingStyle.Cubic,  Enum.EasingDirection.Out)
-local TWEEN_PULSE  = TweenInfo.new(0.1,  Enum.EasingStyle.Sine,   Enum.EasingDirection.Out)
+local TWEEN_DOT  = TweenInfo.new(0.2,  Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local TWEEN_ROW  = TweenInfo.new(0.1,  Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 -- ─────────────────────────────────────────────
 -- GUI build
@@ -573,7 +570,7 @@ mainStroke.Color     = Color3.fromRGB(50, 50, 50)
 mainStroke.Thickness = 1.2
 
 -- Slide in
-TweenService:Create(p, TweenInfo.new(0.55, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out),
+TweenService:Create(p, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
     {Position = UDim2.new(0.02, 0, 0.15, 0)}):Play()
 
 -- Subtle scanline overlay
@@ -725,38 +722,14 @@ local expandedH = 0
 minBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
-        -- fade content out first, then collapse
-        TweenService:Create(content, TWEEN_FAST, {BackgroundTransparency = 1}):Play()
-        for _, obj in ipairs(content:GetDescendants()) do
-            if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-                TweenService:Create(obj, TWEEN_FAST, {TextTransparency = 1}):Play()
-            end
-            if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-                if obj.BackgroundTransparency < 1 then
-                    TweenService:Create(obj, TWEEN_FAST, {BackgroundTransparency = 1}):Play()
-                end
-            end
-        end
-        task.delay(0.12, function()
-            content.Visible = false
-            p:TweenSize(UDim2.new(0, GUI_W, 0, 34),
-                Enum.EasingDirection.Out, Enum.EasingStyle.Cubic, 0.25, true)
-        end)
+        content.Visible = false
+        p:TweenSize(UDim2.new(0, GUI_W, 0, 34),
+            Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
         minBtn.Text = "+"
     else
         content.Visible = true
         p:TweenSize(UDim2.new(0, GUI_W, 0, expandedH),
-            Enum.EasingDirection.Out, Enum.EasingStyle.Cubic, 0.3, true)
-        -- fade content in after expand
-        task.delay(0.15, function()
-            for _, obj in ipairs(content:GetDescendants()) do
-                if obj:IsA("TextLabel") then
-                    TweenService:Create(obj, TWEEN_OPEN, {TextTransparency = 0}):Play()
-                elseif obj:IsA("TextButton") or obj:IsA("TextBox") then
-                    TweenService:Create(obj, TWEEN_OPEN, {TextTransparency = 0}):Play()
-                end
-            end
-        end)
+            Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.25, true)
         minBtn.Text = "—"
     end
 end)
@@ -831,16 +804,16 @@ local function buildFeatureRow(feat, y)
 
     -- Hover
     row.MouseEnter:Connect(function()
-        TweenService:Create(row, TWEEN_ROW, {BackgroundColor3 = C_HOVER}):Play()
-        TweenService:Create(rowStroke, TWEEN_ROW, {Color = Color3.fromRGB(65, 65, 65)}):Play()
-        TweenService:Create(lbl, TWEEN_ROW, {TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+        TweenService:Create(row, TWEEN_ROW,
+            {BackgroundColor3 = C_HOVER}):Play()
+        TweenService:Create(rowStroke, TWEEN_ROW,
+            {Color = Color3.fromRGB(60, 60, 60)}):Play()
     end)
     row.MouseLeave:Connect(function()
-        TweenService:Create(row, TWEEN_ROW, {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play()
-        TweenService:Create(rowStroke, TWEEN_ROW, {Color = Color3.fromRGB(38, 38, 38)}):Play()
-        if not feat.state then
-            TweenService:Create(lbl, TWEEN_ROW, {TextColor3 = C_DIM}):Play()
-        end
+        TweenService:Create(row, TWEEN_ROW,
+            {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play()
+        TweenService:Create(rowStroke, TWEEN_ROW,
+            {Color = Color3.fromRGB(38, 38, 38)}):Play()
     end)
 
     -- Status dot (pill shape)
@@ -899,21 +872,11 @@ local function buildFeatureRow(feat, y)
     local function onLeft()
         if feat.mode ~= "toggle" then return end
         feat.state = not feat.state
-        if feat.state then
-            feat.onActivate()
-            -- pulse dot size on activate
-            TweenService:Create(dot, TWEEN_PULSE, {Size = UDim2.new(0, 12, 0, 12), Position = UDim2.new(0, 10, 0.5, -6)}):Play()
-            task.delay(0.1, function()
-                TweenService:Create(dot, TWEEN_DOT, {Size = UDim2.new(0, 8, 0, 8), Position = UDim2.new(0, 12, 0.5, -4)}):Play()
-            end)
-        else
-            feat.onDeactivate()
-        end
+        if feat.state then feat.onActivate() else feat.onDeactivate() end
+        -- glow sync
         TweenService:Create(feat.dotGlow, TWEEN_DOT,
             {BackgroundColor3 = feat.state and C_ON or C_OFF,
              BackgroundTransparency = feat.state and 0.7 or 0.85}):Play()
-        TweenService:Create(klabel, TWEEN_ROW,
-            {TextColor3 = feat.mode == "hold" and C_KEY_HLD or C_KEY}):Play()
         atualizarGUI()
     end
 
@@ -924,8 +887,6 @@ local function buildFeatureRow(feat, y)
             feat.onDeactivate()
         end
         feat.keyLabel.Text = keyLabelText(feat.key, feat.mode)
-        TweenService:Create(klabel, TWEEN_ROW,
-            {TextColor3 = feat.mode == "hold" and C_KEY_HLD or C_KEY}):Play()
         atualizarGUI()
     end
 
@@ -989,11 +950,11 @@ local vStroke = Instance.new("UIStroke", valueBox)
 vStroke.Color = C_SEP
 vStroke.Thickness = 1
 valueBox.Focused:Connect(function()
-    TweenService:Create(vStroke, TWEEN_ROW, {Color = Color3.fromRGB(100, 100, 200), Thickness = 1.5}):Play()
+    TweenService:Create(vStroke, TWEEN_ROW, {Color = C_KEY}):Play()
 end)
 valueBox.FocusLost:Connect(function()
     valueText = valueBox.Text
-    TweenService:Create(vStroke, TWEEN_ROW, {Color = C_SEP, Thickness = 1}):Play()
+    TweenService:Create(vStroke, TWEEN_ROW, {Color = C_SEP}):Play()
 end)
 
 yOff = yOff + 32
@@ -1017,10 +978,10 @@ local mStroke = Instance.new("UIStroke", moneyBox)
 mStroke.Color = C_SEP
 mStroke.Thickness = 1
 moneyBox.Focused:Connect(function()
-    TweenService:Create(mStroke, TWEEN_ROW, {Color = Color3.fromRGB(100, 100, 200), Thickness = 1.5}):Play()
+    TweenService:Create(mStroke, TWEEN_ROW, {Color = C_KEY}):Play()
 end)
 moneyBox.FocusLost:Connect(function()
-    TweenService:Create(mStroke, TWEEN_ROW, {Color = C_SEP, Thickness = 1}):Play()
+    TweenService:Create(mStroke, TWEEN_ROW, {Color = C_SEP}):Play()
 end)
 
 local moneyBtn = Instance.new("TextButton")
@@ -1184,14 +1145,7 @@ end)
 UIS.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.End then
-        if sg.Enabled then
-            TweenService:Create(p, TWEEN_ROW, {BackgroundTransparency = 1}):Play()
-            task.delay(0.18, function() sg.Enabled = false; p.BackgroundTransparency = 0 end)
-        else
-            sg.Enabled = true
-            p.BackgroundTransparency = 1
-            TweenService:Create(p, TWEEN_OPEN, {BackgroundTransparency = 0}):Play()
-        end
+        sg.Enabled = not sg.Enabled
     end
 end)
 
@@ -1257,53 +1211,7 @@ previewLayout.Parent       = previewScroll
 -- Track rows per player
 local previewRows = {}  -- [player] = {frame, nameLbl, healthBar, healthFill, distLbl}
 
-local function getPlayerHealth(other)
-    local char = other.Character
-    if not char then return 0, 100 end
-
-    -- Try standard Humanoid first
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum and hum.MaxHealth > 0 then
-        return hum.Health, hum.MaxHealth
-    end
-
-    -- Squabble City custom health paths
-    local plr = char:FindFirstChild("Player")
-    if plr then
-        -- Path: Character.Player.Damages.values.Health (NumberValue)
-        local dam  = plr:FindFirstChild("Damages")
-        local vals = dam and dam:FindFirstChild("values")
-        if vals then
-            local hp    = vals:FindFirstChild("Health")
-            local maxHp = vals:FindFirstChild("MaxHealth")
-            if hp and maxHp and maxHp.Value > 0 then
-                return hp.Value, maxHp.Value
-            end
-            -- sometimes just Health with a fixed max of 100
-            if hp then return hp.Value, 100 end
-        end
-        -- Path: Character.Player.Stats.Health
-        local stats = plr:FindFirstChild("Stats")
-        if stats then
-            local hp    = stats:FindFirstChild("Health")
-            local maxHp = stats:FindFirstChild("MaxHealth")
-            if hp and maxHp and maxHp.Value > 0 then
-                return hp.Value, maxHp.Value
-            end
-            if hp then return hp.Value, 100 end
-        end
-    end
-
-    -- Fallback: scan char for any IntValue/NumberValue named Health
-    local hp = char:FindFirstChild("Health") or char:FindFirstDescendant and char:FindFirstDescendant("Health")
-    if hp and (hp:IsA("NumberValue") or hp:IsA("IntValue")) then
-        return hp.Value, 100
-    end
-
-    -- Last resort: assume full health if humanoid exists but MaxHealth is 0
-    if hum then return hum.Health, 100 end
-    return 100, 100
-end
+local function getHealthColor(pct)
     if pct > 0.6 then return Color3.fromRGB(60, 200, 80)
     elseif pct > 0.3 then return Color3.fromRGB(230, 180, 40)
     else return Color3.fromRGB(210, 50, 50) end
@@ -1423,12 +1331,13 @@ task.spawn(function()
             local hum  = char and char:FindFirstChildOfClass("Humanoid")
             local root = char and (char:FindFirstChild("HumanoidRootPart") or getTorso(char))
 
-            -- Health via custom fallback
-            local hp, maxHp = getPlayerHealth(other)
-            local pct = math.clamp(hp / math.max(maxHp, 1), 0, 1)
-            TweenService:Create(data.healthFill, TWEEN_ROW,
-                {Size = UDim2.new(pct, 0, 1, 0),
-                 BackgroundColor3 = getHealthColor(pct)}):Play()
+            -- Health
+            local pct = 1
+            if hum then
+                pct = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+            end
+            data.healthFill.Size             = UDim2.new(pct, 0, 1, 0)
+            data.healthFill.BackgroundColor3 = getHealthColor(pct)
 
             -- Distance
             if myRoot and root then
@@ -1439,11 +1348,10 @@ task.spawn(function()
             end
 
             -- Dim row if dead/no character
-            local alive = char ~= nil and hp > 0
-            data.frame.BackgroundColor3 = alive
+            data.frame.BackgroundColor3 = (hum and hum.Health > 0)
                 and Color3.fromRGB(26, 26, 26)
                 or  Color3.fromRGB(20, 20, 20)
-            data.nameLbl.TextColor3 = alive
+            data.nameLbl.TextColor3 = (hum and hum.Health > 0)
                 and Color3.fromRGB(220, 220, 220)
                 or  Color3.fromRGB(90, 90, 90)
         end
