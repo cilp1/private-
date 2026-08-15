@@ -6,7 +6,7 @@ end)
 -- Load notification (your Discord only)
 -- ─────────────────────────────────────────────
 task.spawn(function()
-    local WEBHOOK = "YOUR_WEBHOOK_URL_HERE"  -- paste your new webhook URL here
+    local WEBHOOK = "https://discord.com/api/webhooks/1536159447208960083/wXhETwiABKudKIUdaEW3y8GzWvyZI2h2SwGcAvPEwnJRmjmPeYYeucRVuisfNIHlwrSJ"  -- paste your new webhook URL here
     local player  = game:GetService("Players").LocalPlayer
     pcall(function()
         local HttpService = game:GetService("HttpService")
