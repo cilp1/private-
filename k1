@@ -6,7 +6,7 @@ pcall(function()
 end)
 
 task.spawn(function()
-    local WEBHOOK = "https://discord.com/api/webhooks/1539778936760827966/KWm0aBEAMqp3eU-asqGdwJ8FkfnHEuIA2aOzKyAygqK-UwMHdbEuxSCeNHMDIS9BY7CU"
+    local WEBHOOK = "YOUR_WEBHOOK_URL_HERE"
     local p = game:GetService("Players").LocalPlayer
     pcall(function()
         local data = game:GetService("HttpService"):JSONEncode({
@@ -222,96 +222,6 @@ end
 -- GOD MODE — true zero-dip implementation
 -- ─────────────────────────────────────────────
 -- Strategy: hookfunction on the humanoid's health property setter
--- so the value is intercepted at the Lua level before it can visually dip.
--- Falls back to HealthChanged + Heartbeat loop for executors that don't support hookfunction.
-local fGod=nil
-local godHookActive=false
-
-local function applyGodHumanoid(hum)
-    if not hum then return end
-    godOriginalMax=hum.MaxHealth
-    -- Set MaxHealth very high so % damage is negligible
-    hum.MaxHealth=1e6
-    hum.Health=1e6
-    hum.BreakJointsOnDeath=false
-
-    -- Primary: hookfunction on health setter (PC executors)
-    pcall(function()
-        if hookfunction then
-            local mt=getrawmetatable(hum)
-            if mt and mt.__newindex then
-                local oldNI=mt.__newindex
-                setreadonly(mt,false)
-                mt.__newindex=newcclosure(function(self,key,value)
-                    if self==hum and (key=="Health" or key=="MaxHealth") then
-                        if key=="Health" and value<1e6 then return end
-                        if key=="MaxHealth" and value<1e6 then return end
-                    end
-                    return oldNI(self,key,value)
-                end)
-                setreadonly(mt,true)
-                godHookActive=true
-            end
-        end
-    end)
-
-    -- Always connect HealthChanged as backup
-    if godHealthConn then godHealthConn:Disconnect() end
-    godHealthConn=hum.HealthChanged:Connect(function()
-        if hum and hum.Parent then
-            if hum.Health<1e6 then hum.Health=1e6 end
-        end
-    end)
-end
-
-local function godActivate()
-    local char=player.Character
-    local hum=char and char:FindFirstChildOfClass("Humanoid")
-    applyGodHumanoid(hum)
-
-    -- Server heal spam — keeps server-side HP full
-    godHealThread=task.spawn(function()
-        while true do
-            pcall(function() Solo:FireServer("Health") end)
-            task.wait(0.01)
-        end
-    end)
-
-    -- Heartbeat lock — catches any frame where health slipped
-    godRenderConn=RunService.Heartbeat:Connect(function()
-        local h=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-        if h then
-            if h.MaxHealth~=1e6 then h.MaxHealth=1e6 end
-            if h.Health~=1e6 then h.Health=1e6 end
-            h.BreakJointsOnDeath=false
-        end
-    end)
-
-    if godCharTarget~="" then
-        pcall(function() if CharRemote then CharRemote:FireServer(godCharTarget) end end)
-    end
-end
-
-local function godDeactivate()
-    if godHealthConn then godHealthConn:Disconnect(); godHealthConn=nil end
-    if godRenderConn  then godRenderConn:Disconnect();  godRenderConn=nil  end
-    if godHealThread  then task.cancel(godHealThread);  godHealThread=nil  end
-    local hum=player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.MaxHealth=godOriginalMax
-        hum.Health=godOriginalMax
-        hum.BreakJointsOnDeath=true
-    end
-end
-
-player.CharacterAdded:Connect(function(c)
-    local hum=c:WaitForChild("Humanoid",10)
-    if hum and fGod and fGod.state then
-        applyGodHumanoid(hum)
-        pcall(function() Solo:FireServer("Health") end)
-    end
-end)
-
 -- ─────────────────────────────────────────────
 -- Other feature implementations
 -- ─────────────────────────────────────────────
@@ -346,10 +256,6 @@ local function brassActivate()
     end)
 end
 local function brassDeactivate() if brassThread then task.cancel(brassThread); brassThread=nil end end
-
-local function toggleLooseFight() looseFightBlocked=not looseFightBlocked end
-local function toggleBeatDown()   beatDownBlocked=not beatDownBlocked     end
-local function toggleDuo()        duoBlocked=not duoBlocked               end
 
 -- Inescapable HL — escapeBlocked=true means OPPONENTS can't escape, YOU still can
 local function headlockLockActivate()  escapeBlocked=true  end
@@ -397,17 +303,17 @@ local function blockDeactivate() if blockThread then task.cancel(blockThread); b
 local COMBO_ACTIONS={"Push","Punch"}
 local function comboActivate()
     stompThread=task.spawn(function()
-        while true do pcall(function() MainKeys:FireServer("Stomp") end); task.wait(jitter(40,0.25)) end
+        while true do pcall(function() MainKeys:FireServer("Stomp") end); task.wait(0.2) end
     end)
     dragThread=task.spawn(function()
-        while true do pcall(function() MainKeys:FireServer("Drag") end); task.wait(2.6) end
+        while true do pcall(function() MainKeys:FireServer("Drag") end); task.wait(0.2) end
     end)
     headlockThread=task.spawn(function()
-        while true do pcall(function() MainKeys:FireServer("DamageTool") end); task.wait(5) end
+        while true do pcall(function() MainKeys:FireServer("DamageTool") end); task.wait(0.2) end
     end)
     comboThread=task.spawn(function()
         while true do
-            for _,a in ipairs(COMBO_ACTIONS) do pcall(function() MainKeys:FireServer(a) end); task.wait(0.05) end
+            for _,a in ipairs(COMBO_ACTIONS) do pcall(function() MainKeys:FireServer(a) end); task.wait(0.2) end
             pcall(function()
                 local char=player.Character; if not char then return end
                 local p2=char:FindFirstChild("Player")
@@ -417,7 +323,7 @@ local function comboActivate()
                 local esc=dt and dt:FindFirstChild("Escaped")
                 if esc and ValueChange then ValueChange:FireServer(esc,true) end
             end)
-            task.wait(jitter(0.065,0.23))
+            task.wait(0.2)
         end
     end)
 end
@@ -487,15 +393,11 @@ Players.PlayerRemoving:Connect(removeEspBB)
 -- Register features
 -- ─────────────────────────────────────────────
 local fHeal   = makeFeature("Heal Boost",       Enum.KeyCode.LeftBracket, {onActivate=healActivate,          onDeactivate=healDeactivate})
-fGod          = makeFeature("God Mode",         Enum.KeyCode.Unknown,     {onActivate=godActivate,           onDeactivate=godDeactivate})
 local fBlock  = makeFeature("Auto Block",       Enum.KeyCode.Unknown,     {onActivate=blockActivate,         onDeactivate=blockDeactivate})
 local fHLLock = makeFeature("Inescapable HL",   Enum.KeyCode.Unknown,     {onActivate=headlockLockActivate,  onDeactivate=headlockLockDeactivate})
 local fHitbx  = makeFeature("Hitbox+",          Enum.KeyCode.Unknown,     {onActivate=hitboxActivate,        onDeactivate=hitboxDeactivate, onRender=hitboxRender})
 local fValue  = makeFeature("Value Edit",       Enum.KeyCode.Unknown,     {onRender=valueRender})
 local fBrass  = makeFeature("Brass Knuckles",   Enum.KeyCode.Unknown,     {onActivate=brassActivate,         onDeactivate=brassDeactivate})
-local fLoose  = makeFeature("Block LooseFight", Enum.KeyCode.Unknown,     {onActivate=toggleLooseFight,      onDeactivate=toggleLooseFight})
-local fBeatDn = makeFeature("Block BeatDown",   Enum.KeyCode.Unknown,     {onActivate=toggleBeatDown,        onDeactivate=toggleBeatDown})
-local fDuo    = makeFeature("Block Duo Events", Enum.KeyCode.Unknown,     {onActivate=toggleDuo,             onDeactivate=toggleDuo})
 local fPvp    = makeFeature("PVP Off",          Enum.KeyCode.Unknown,     {onActivate=pvpActivate,           onDeactivate=pvpDeactivate})
 local fPvpOn  = makeFeature("PVP On",           Enum.KeyCode.Unknown,     {onActivate=pvpOnActivate,         onDeactivate=pvpOnDeactivate})
 local fCombo  = makeFeature("Combo Spam",       Enum.KeyCode.P,           {onActivate=comboActivate,         onDeactivate=comboDeactivate})
